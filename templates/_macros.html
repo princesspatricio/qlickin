@@ -1,0 +1,34 @@
+{% macro class_picker(all_label="All students") %}
+<div class="row">
+<div><label>For</label><select name="course" id="course"><option value="ALL">{{ all_label }}</option>{% for c in courses %}<option>{{ c }}</option>{% endfor %}</select></div>
+<div id="yw" hidden><label>Year</label><select name="year"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+<div id="sw" hidden><label>Section</label><select name="section"><option>A</option><option>B</option><option>C</option></select></div>
+<div id="mw" hidden><label>Major</label><select name="major">{% for m in majors %}<option>{{ m }}</option>{% endfor %}</select></div></div>
+<script>(function(){var c=document.getElementById('course');function t(){var all=c.value==='ALL',b=c.value==='BSED';
+document.getElementById('yw').hidden=all;document.getElementById('sw').hidden=all||b;document.getElementById('mw').hidden=all||!b}
+c.onchange=t;t()})();</script>
+{% endmacro %}
+{% macro file_links(files) %}
+<div class="thumbs">{% for f in files %}<div class="th">
+{% if f.ext in ['png','jpg','jpeg','gif','webp'] %}<a href="{{ url_for('get_file', fid=f.id, view=1) }}" target="_blank" title="{{ f.name }}"><img class="thumb" src="{{ url_for('get_file', fid=f.id, view=1) }}" alt="{{ f.name }}"></a>
+<a class="dl" href="{{ url_for('get_file', fid=f.id) }}">Download</a>
+{% else %}<a class="btn sm" href="{{ url_for('get_file', fid=f.id) }}">{{ f.name }}</a>{% if f.ext in inline_ext %}<a class="dl" href="{{ url_for('get_file', fid=f.id, view=1) }}" target="_blank">View</a>{% endif %}{% endif %}
+</div>{% endfor %}</div>
+{% endmacro %}
+{% macro book(m, week_ago, teacher=False) %}
+{% set can_view = m.ext in inline_ext %}
+<div class="book">
+<a class="cover bk{{ m.id|book_color }}" href="{{ url_for('get_file', fid=m.file_id, view=1) if can_view else url_for('get_file', fid=m.file_id) }}"{% if can_view %} target="_blank"{% endif %} title="{{ 'Open' if can_view else 'Download' }}: {{ m.label }}">
+{% if m.uploaded_at[:10] >= week_ago %}<span class="ribbon">NEW</span>{% endif %}
+<span class="bk-top">{{ icon('book') }}<span class="bk-type">{{ m.ext|upper }}</span></span>
+<span class="bk-title">{{ m.label }}</span><span class="bk-rule"></span>
+<span class="bk-desc">{{ m.description or 'Tap the book to open this module.' }}</span>
+<span class="bk-foot">{{ m.class_label }}</span></a>
+<div class="bk-meta">{{ m.file_name }} · {{ m.size|filesize }} · {{ m.uploaded_at[:10] }}</div>
+<div class="bk-actions">
+{% if can_view %}<a class="btn sm" href="{{ url_for('get_file', fid=m.file_id, view=1) }}" target="_blank">View</a>{% endif %}
+<a class="btn g sm" href="{{ url_for('get_file', fid=m.file_id) }}">Download</a>
+{% if teacher %}{% if m.ext in quiz_ext %}<a class="btn gold sm" href="{{ url_for('t_quiz_new', mid=m.id) }}">Generate quiz</a>{% endif %}
+<form class="inline" method="post" action="{{ url_for('t_material_delete', mid=m.id) }}" onsubmit="return confirm('Delete this module?')"><button class="btn r sm">Delete</button></form>{% endif %}
+</div></div>
+{% endmacro %}

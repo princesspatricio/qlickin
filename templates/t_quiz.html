@@ -1,0 +1,43 @@
+{% extends "base.html" %}{% from "_macros.html" import class_picker %}{% block body %}
+<div class="card"><h2>{{ quiz.title }}</h2>
+<p class="mu" style="margin-top:0">From material: <b>{{ quiz.material_label }}</b> · {{ quiz.n_items }} item(s) · <b>{{ quiz.total|num }} points</b> · Difficulty: {{ quiz.level|capitalize }} ·
+{% if quiz.activity_id %}<span class="badge b-present">Published to {{ act.class_label if act else 'students' }}</span>{% else %}<span class="badge b-late">Draft</span>{% endif %}</p>
+<a class="btn gold sm" href="{{ url_for('t_quiz_pdf', qid=quiz.id) }}">Download quiz paper (PDF)</a>
+<a class="btn sm" href="{{ url_for('t_quiz_pdf', qid=quiz.id, key=1) }}">Download answer key (PDF)</a>
+{% if not quiz.activity_id %}<form class="inline" method="post" action="{{ url_for('t_quiz_regen', qid=quiz.id) }}" onsubmit="return confirm('Make brand new items? Your edits will be replaced.')"><button class="btn sm">Regenerate items</button></form>{% endif %}
+{% if act %}<a class="btn g sm" href="{{ url_for('t_quiz_results', qid=quiz.id) }}">Quiz results</a> <a class="btn sm" href="{{ url_for('t_activity_check', aid=act.id) }}">Edit scores</a>{% endif %}
+<form class="inline" method="post" action="{{ url_for('t_quiz_delete', qid=quiz.id) }}" onsubmit="return confirm('Delete this quiz{{ ' and all student scores for it' if quiz.activity_id }}?')"><button class="btn r sm">Delete quiz</button></form>
+<a class="btn sm" href="{{ url_for('t_materials') }}">Back</a></div>
+{% if stats %}<div class="card"><h2>Results</h2>
+<div class="grid" style="margin-bottom:12px"><div class="card stat"><b>{{ stats.n }}</b>Students who took it</div><div class="card stat"><b>{{ stats.avg|num }}</b>Average score</div>
+<div class="card stat"><b>{{ stats.high|num }}</b>Highest</div><div class="card stat"><b>{{ stats.low|num }}</b>Lowest</div></div>
+<p class="mu">Percent of students who got each item right (lowest first shows the hardest items):</p>
+{% for it in quiz['items'] %}{% set r = stats['items'][loop.index0] %}
+<div class="bar"><span class="lbl" style="flex-basis:70px">Item {{ it.no }}{% if it.type == 'match' %}+{% endif %}</span><div class="track"><div class="fill" style="--w:{{ r }}%"></div></div><span class="pct">{{ r }}%</span></div>{% endfor %}</div>{% endif %}
+{% if not quiz.activity_id %}<div class="card"><h2>Publish to students</h2>
+<p class="mu" style="margin-top:0">Students take the quiz online from their Activities page. It is checked automatically and the score goes straight into Records.</p>
+<form method="post" action="{{ url_for('t_quiz_publish', qid=quiz.id) }}">
+{{ class_picker("All students") }}
+<div class="row"><div><label>Quiz date (shows in Records)</label><input type="date" name="date" value="{{ today }}" required></div>
+<div><label>Due date (optional)</label><input type="date" name="due_date"></div>
+<div><label>Time limit in minutes (0 = none)</label><input type="number" name="time_limit" value="0" min="0" max="300"></div></div>
+<label class="chk"><input type="checkbox" name="shuffle" value="1" checked> Shuffle the items and choices for every student</label>
+<label class="chk"><input type="checkbox" name="show_answers" value="1" checked> Show students their correct answers after they submit</label>
+<button class="btn g">Publish quiz</button></form></div>
+{% else %}<div class="msg" style="color:inherit">This quiz is published. If you edit items now, only students who have not taken it yet get the changes, and the total points update.</div>{% endif %}
+<form method="post" action="{{ url_for('t_quiz_save', qid=quiz.id) }}" class="card"><h2>Review and edit the items</h2>
+<p class="mu" style="margin-top:0">The correct answers are shown here. Change any text, tick a different correct choice, change points, or tick delete to remove an item.</p>
+<label>Quiz title</label><input name="title" value="{{ quiz.title }}">
+{% for it in quiz['items'] %}{% set i = loop.index0 %}
+<div class="qitem"><div class="qhead"><b>{{ it.no }}{% if it.type == 'match' %}-{{ it.no + it.pairs|length - 1 }}{% endif %}.</b>
+<span class="badge b-excused">{{ type_names[it.type] }}</span><label class="chk" style="margin:0 0 0 auto"><input type="checkbox" name="del_{{ i }}"> delete</label></div>
+{% if it.type == 'match' %}
+<label>Instruction</label><input name="q_{{ i }}" value="{{ it.q }}">
+{% for pr in it.pairs %}{% set k = loop.index0 %}<div class="row" style="margin-bottom:6px"><input name="term_{{ i }}_{{ k }}" value="{{ pr.term }}" placeholder="Term" style="flex:1"><input name="defn_{{ i }}_{{ k }}" value="{{ pr.defn }}" placeholder="Description" style="flex:3"></div>{% endfor %}
+{% else %}
+<textarea name="q_{{ i }}" rows="2">{{ it.q }}</textarea>
+{% if it.type == 'mc' %}{% for c in it.choices %}{% set j = loop.index0 %}<div class="opt-row"><input type="radio" name="a_{{ i }}" value="{{ j }}" style="width:20px;flex:0 0 20px" {{ 'checked' if c == it.answer }}><input name="c_{{ i }}_{{ j }}" value="{{ c }}"></div>{% endfor %}
+{% elif it.type == 'tf' %}<label>Correct answer</label><select name="a_{{ i }}"><option {{ 'selected' if it.answer == 'True' }}>True</option><option {{ 'selected' if it.answer == 'False' }}>False</option></select>{% if it.note %}<div class="mu">{{ it.note }}</div>{% endif %}
+{% else %}<label>Correct answer</label><input name="a_{{ i }}" value="{{ it.answer }}">{% endif %}{% endif %}
+<label>Points{{ ' per pair' if it.type == 'match' }}</label><input type="number" name="p_{{ i }}" value="{{ it.points|num }}" min="0" max="100" step="any" style="width:100px"></div>{% endfor %}
+<button class="btn p">Save changes</button></form>{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h2>Question Manager</h2>
+<p class="mu" style="margin-top:0">Pick a class, upload its file and choose how many questions to make (up to 35). Questions in a class's <b>pool</b> are picked at random when a student scans, so answers cannot be copied.</p>
+<form method="post" enctype="multipart/form-data">
+<div class="row">
+<div><label>Class</label><select name="course" id="course"><option value="ALL">All classes (default)</option>{% for c in courses %}<option>{{ c }}</option>{% endfor %}</select></div>
+<div id="yw"><label>Year</label><select name="year"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+<div id="sw"><label>Section</label><select name="section"><option>A</option><option>B</option><option>C</option></select></div>
+<div id="mw" hidden><label>Major</label><select name="major">{% for m in majors %}<option>{{ m }}</option>{% endfor %}</select></div>
+<div style="max-width:170px"><label>How many questions (max 35)</label><input type="number" name="count" value="10" min="1" max="35"></div></div>
+<label>File for this class (TXT, PDF, DOCX or PPTX)</label>
+<input type="file" name="file" accept=".txt,.pdf,.docx,.pptx" required>
+<label class="chk"><input type="checkbox" name="add_pool" value="1" checked> Add the new questions to the pool right away</label>
+<button class="btn p">Generate questions</button></form>
+<p class="mu">"All classes" is used only when a class has no questions of its own.</p></div>
+<div class="card"><h2>Questions by class</h2>
+{% for g in rows|groupby('class_label') %}<h3>{{ g.grouper }}</h3>
+{% for q in g.list %}<div class="msg" style="color:inherit"><b>{{ q.question_text }}</b>
+{% if q.is_active %}<span class="badge b-present">IN POOL</span>{% else %}<span class="badge b-excused">NOT IN POOL</span>{% endif %}
+<div class="mu">File: {{ q.source_file }} · Correct answer: <b>{{ q.correct_answer }}</b></div>
+<div>{% for c in q.choices %}<span class="tag">{{ c }}</span>{% endfor %}</div>
+<div style="margin-top:10px">
+<form class="inline" method="post" action="{{ url_for('t_qtoggle', qid=q.id) }}"><button class="btn sm {{ 'gold' if not q.is_active }}">{{ 'Remove from pool' if q.is_active else 'Add to pool' }}</button></form>
+<a class="btn sm" href="{{ url_for('t_qedit', qid=q.id) }}">Edit</a>
+<form class="inline" method="post" action="{{ url_for('t_qdelete', qid=q.id) }}" onsubmit="return confirm('Delete this question?')"><button class="btn r sm">Delete</button></form></div>
+</div>{% endfor %}
+{% else %}<p class="mu">No questions yet. Choose a class and upload a file above.</p>{% endfor %}</div>{% endblock %}
+{% block js %}<script>
+const c=document.getElementById('course');
+function t(){const all=c.value==='ALL',b=c.value==='BSED';
+document.getElementById('yw').hidden=all;document.getElementById('sw').hidden=all||b;document.getElementById('mw').hidden=all||!b}
+c.onchange=t;t();
+</script>{% endblock %}

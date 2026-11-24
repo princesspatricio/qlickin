@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h2>History Log</h2><p class="mu" style="margin-top:0">The latest 300 actions: who did what and when.</p>
+<div class="tw"><table><tr><th>When</th><th>Action</th><th>Details</th><th>By</th></tr>
+{% for r in rows %}<tr><td>{{ r.when }}</td><td><b>{{ r.action }}</b></td><td>{{ r.detail }}</td><td>{{ r.by }}</td></tr>
+{% else %}<tr><td colspan="4" class="mu">Nothing recorded yet.</td></tr>{% endfor %}</table></div></div>{% endblock %}

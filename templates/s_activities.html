@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h2>My activities (to-do list)</h2>
+{% for a in rows %}{% set cls = {'todo':'b-late','overdue':'b-absent','submitted':'b-excused','checked':'b-present'}[a.status] %}
+<div class="msg" style="color:inherit"><b><a href="{{ url_for('s_activity', aid=a.id) }}">{{ a.title }}</a></b>
+<span class="badge {{ cls }}">{{ {'todo':'To do','overdue':'Overdue','submitted':'Submitted','checked':'Checked'}[a.status] }}</span>
+{% if a.status == 'checked' %}<span class="badge b-present">{{ a.sub.score|num }} / {{ a.max_score|num }}</span>{% endif %}
+<div class="mu">Due {{ a.due_date or 'no due date' }} · {{ a.max_score|num }} points · for {{ a.class_label }}</div>
+<a class="btn sm {{ 'p' if a.status in ['todo','overdue'] }}" style="margin-top:8px" href="{{ url_for('s_activity', aid=a.id) }}">{{ ('Take quiz' if a.kind == 'quiz' else 'Open &amp; submit'|safe) if a.status in ['todo','overdue'] else 'View' }}</a></div>
+{% else %}<p class="mu">No activities yet.</p>{% endfor %}</div>{% endblock %}

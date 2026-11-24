@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block body %}
+<div class="grid2">
+<div class="card"><h2>My details</h2>
+<form method="post"><input type="hidden" name="action" value="details">
+<div class="row"><div><label>Last name</label><input name="last_name" value="{{ s.last_name }}" required></div>
+<div><label>First name</label><input name="first_name" value="{{ s.first_name }}" required></div>
+<div class="mi"><label>MI</label><input name="mi" maxlength="1" value="{{ s.middle_initial }}" required></div></div>
+<label>Gmail</label><input name="email" type="email" value="{{ s.email }}" required>
+<p class="mu">Class: <b>{{ label(s) }}</b>. Ask your teacher if your course, year or section needs to change.</p>
+<button class="btn p">Save details</button></form></div>
+<div class="card"><h2>Change password</h2>
+<form method="post"><input type="hidden" name="action" value="password">
+<label>Current password</label><input name="current" type="password" required>
+<label>New password (min 8)</label><input name="new" type="password" minlength="8" required>
+<label>Confirm new password</label><input name="confirm" type="password" minlength="8" required>
+<button class="btn p">Change password</button></form></div></div>{% endblock %}

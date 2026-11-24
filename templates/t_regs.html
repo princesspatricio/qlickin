@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% block body %}
+<form class="card" method="get"><h2>Registrations <a class="btn g sm" style="float:right" href="{{ url_for('t_add_student') }}">+ Register student</a></h2>
+<div class="row">
+<div><label>Status</label><select name="status"><option value="">All</option>{% for x in ['pending','approved','declined'] %}<option value="{{ x }}" {{ 'selected' if f.status==x }}>{{ x|capitalize }}</option>{% endfor %}</select></div>
+<div><label>Course</label><select name="course"><option value="">All</option>{% for c in courses %}<option {{ 'selected' if f.course==c }}>{{ c }}</option>{% endfor %}</select></div>
+<div><label>Year</label><select name="year"><option value="">All</option>{% for y in ['1','2','3','4'] %}<option {{ 'selected' if f.year==y }}>{{ y }}</option>{% endfor %}</select></div>
+<div><label>Section / Major</label><select name="section"><option value="">All</option>{% for x in ['A','B','C'] + majors %}<option {{ 'selected' if f.section==x }}>{{ x }}</option>{% endfor %}</select></div>
+<div><label>Sort by surname</label><select name="order"><option value="asc" {{ 'selected' if order=='asc' }}>A-Z</option><option value="desc" {{ 'selected' if order=='desc' }}>Z-A</option></select></div></div>
+<button class="btn p">Apply filter</button> <a class="btn" href="{{ url_for('t_regs') }}">Reset</a></form>
+<div class="card"><p class="mu" style="margin-top:0">Showing <b>{{ rows|length }}</b> student(s) · Surname {{ 'A-Z' if order=='asc' else 'Z-A' }}</p>
+<div class="tw"><table>
+<tr><th>#</th><th>Student</th><th>Gmail</th><th>Course</th><th>Year</th><th>Section/Major</th><th>Status</th><th>Action</th></tr>
+{% for s in rows %}<tr><td class="mu">{{ loop.index }}</td><td><b>{{ full_name(s) }}</b></td><td>{{ s.email }}</td>
+<td>{{ s.course }}</td><td>{{ s.year_level }}</td><td>{{ sec(s) }}</td>
+<td><span class="badge {{ 'b-present' if s.status=='approved' else 'b-absent' if s.status=='declined' else 'b-late' }}">{{ s.status }}</span></td>
+<td>{% if s.status == 'pending' %}
+<form class="inline" method="post" action="{{ url_for('t_decide', sid=s.id, action='approve') }}"><button class="btn g sm">Approve</button></form>
+<form class="inline" method="post" action="{{ url_for('t_decide', sid=s.id, action='decline') }}"><button class="btn r sm">Decline</button></form>
+{% elif s.status == 'approved' %}
+<form class="inline" method="post" action="{{ url_for('t_resend', sid=s.id) }}"><button class="btn gold sm">Resend email</button></form>
+{% endif %}
+<a class="btn sm" href="{{ url_for('t_edit_student', sid=s.id) }}">Edit</a>
+<form class="inline" method="post" action="{{ url_for('t_delete_student', sid=s.id) }}" onsubmit="return confirm('Delete this student and all their attendance records?')"><button class="btn r sm">Delete</button></form></td></tr>
+{% else %}<tr><td colspan="8" class="mu">No students match.</td></tr>{% endfor %}
+</table></div></div>{% endblock %}

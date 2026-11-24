@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% block body %}
+<div class="card" style="max-width:680px"><h2>{{ 'Register a student' if mode == 'add' else 'Edit student' }}</h2>
+{% if mode == 'add' %}<p class="mu" style="margin-top:0">The student is approved and activated right away, so they can log in immediately.</p>{% endif %}
+<form method="post">
+<div class="row"><div><label>Last name</label><input name="last_name" value="{{ v.last_name }}" required></div>
+<div><label>First name</label><input name="first_name" value="{{ v.first_name }}" required></div>
+<div class="mi"><label>MI</label><input name="mi" maxlength="1" value="{{ v.mi }}" required></div></div>
+<label>Gmail</label><input name="email" type="email" pattern=".+@gmail\.com" title="Must be a @gmail.com address" value="{{ v.email }}" required>
+<label>{{ 'Password (leave blank to auto-generate)' if mode == 'add' else 'New password (leave blank to keep the current one)' }}</label>
+<input name="password" type="text" minlength="8" autocomplete="off">
+<div class="row"><div><label>Course</label><select name="course" id="course">{% for c in courses %}<option {{ 'selected' if v.course == c }}>{{ c }}</option>{% endfor %}</select></div>
+<div><label>Year level</label><select name="year">{% for y in ['1','2','3','4'] %}<option {{ 'selected' if v.year == y }}>{{ y }}</option>{% endfor %}</select></div>
+<div id="sw"><label>Section</label><select name="section">{% for x in ['A','B','C'] %}<option {{ 'selected' if v.section == x }}>{{ x }}</option>{% endfor %}</select></div>
+<div id="mw" hidden><label>Major</label><select name="major">{% for m in majors %}<option {{ 'selected' if v.major == m }}>{{ m }}</option>{% endfor %}</select></div></div>
+{% if mode == 'edit' %}
+<label>Status</label><select name="status">{% for x in ['pending','approved','declined'] %}<option value="{{ x }}" {{ 'selected' if v.status == x }}>{{ x|capitalize }}</option>{% endfor %}</select>
+{% else %}
+<label style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" name="send_email" value="1" style="width:auto"> Email the login details to the student's Gmail</label>
+{% endif %}
+<button class="btn p">{{ 'Register student' if mode == 'add' else 'Save changes' }}</button>
+<a class="btn" href="{{ url_for('t_regs') }}">Cancel</a></form></div>{% endblock %}
+{% block js %}<script>
+const c=document.getElementById('course');
+function t(){const b=c.value==='BSED';document.getElementById('sw').hidden=b;document.getElementById('mw').hidden=!b}
+c.onchange=t;t();
+</script>{% endblock %}

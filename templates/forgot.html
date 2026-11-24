@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block body %}
+<div class="card narrow"><h2>Forgot password</h2>
+<p class="mu" style="margin-top:0">Type your registered Gmail. We will send you a link to choose a new password.</p>
+<form method="post"><label>Gmail</label><input name="email" type="email" required>
+<button class="btn p">Send reset link</button> <a class="btn" href="{{ url_for('login') }}">Back</a></form></div>{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block body %}
+<div class="card" style="text-align:center"><h2>{{ full_name(row.s) }} - {{ quiz.title }}</h2>
+<div class="score-ring" style="--p:{{ row.pct }}"><span>{{ row.pct }}%</span></div>
+<div class="stat"><b style="font-size:34px">{{ row.score|num }} / {{ a.max_score|num }}</b></div>
+<p><span class="remark {{ 'pass' if row.remark == 'Passed' else 'fail' }}">{{ row.remark }}</span></p>
+<p class="mu">Time taken {{ row.taken }} · Submitted {{ row.at }}</p>
+<a class="btn" href="{{ url_for('t_quiz_results', qid=quiz.id) }}">Back to results</a></div>
+<div class="card"><h2>Answers</h2>
+{% for d in att.detail %}<div class="qitem"><div class="qhead"><b>Item {{ loop.index }}</b><span class="badge b-excused">{{ type_names[d.type] }}</span>
+<span class="badge {{ 'b-present' if d.earned == d.max else 'b-late' if d.earned > 0 else 'b-absent' }}" style="margin-left:auto">{{ d.earned|num }} / {{ d.max|num }}</span></div>
+{% if d.type == 'match' %}<div class="note">{{ d.q }}</div>{% for r in d.rows %}<div class="{{ 'ok' if r.ok else 'no' }}"><b>{{ r.term }}</b> → {{ r.given or '(no answer)' }}{% if not r.ok %}<div class="mu">Correct: {{ r.correct }}</div>{% endif %}</div>{% endfor %}
+{% else %}<div class="note">{{ d.q }}</div><div class="{{ 'ok' if d.ok else 'no' }}">Answer: {{ d.given or '(no answer)' }}</div>{% if not d.ok %}<div class="mu">Correct answer: {{ d.correct }}</div>{% endif %}{% endif %}</div>{% endfor %}</div>{% endblock %}

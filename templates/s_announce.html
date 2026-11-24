@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h2>Announcements</h2>
+{% for a in rows %}<div class="msg" style="color:inherit"><b>{{ a.title }}</b>
+<div class="note">{{ a.message }}</div><div class="mu">{{ a.created_at[:16]|replace('T', ' ') }}</div></div>
+{% else %}<p class="mu">No announcements yet.</p>{% endfor %}</div>{% endblock %}

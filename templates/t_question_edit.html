@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block body %}
+<div class="card" style="max-width:680px"><h2>Edit question</h2>
+<p class="mu" style="margin-top:0">Class: <b>{{ q.class_label or 'All classes' }}</b> · File: {{ q.source_file }}</p>
+<form method="post"><label>Question</label><textarea name="question_text" rows="3" required>{{ q.question_text }}</textarea>
+<label>Choices - tick the correct one</label>
+{% for i in range(4) %}<div class="row" style="align-items:center;margin-bottom:6px"><input type="radio" name="correct" value="{{ i+1 }}" style="flex:0 0 20px;min-width:20px;width:20px" {{ 'checked' if correct == i+1 }}>
+<input name="c{{ i+1 }}" value="{{ choices[i] }}" placeholder="Choice {{ i+1 }}"></div>{% endfor %}
+<button class="btn p">Save changes</button> <a class="btn" href="{{ url_for('t_questions') }}">Cancel</a></form></div>{% endblock %}

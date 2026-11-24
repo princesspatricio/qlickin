@@ -1,0 +1,41 @@
+{% extends "base.html" %}{% block body %}
+<form class="card noprint" method="get"><h2>Attendance Records</h2>
+<div class="row">
+<div><label>Date</label><input type="date" name="date" value="{{ f.date }}"></div>
+<div><label>Month</label><input type="month" name="month" value="{{ f.month }}"></div>
+<div><label>Subject</label><select name="subject"><option value="">All</option>{% for x in subjects %}<option {{ 'selected' if f.subject==x }}>{{ x }}</option>{% endfor %}</select></div>
+<div><label>Status</label><select name="status"><option value="">All</option>{% for x in ['present','late','absent','excused'] %}<option value="{{ x }}" {{ 'selected' if f.status==x }}>{{ x|capitalize }}</option>{% endfor %}</select></div></div>
+<div class="row">
+<div><label>Course</label><select name="course"><option value="">All</option>{% for c in courses %}<option {{ 'selected' if f.course==c }}>{{ c }}</option>{% endfor %}</select></div>
+<div><label>Year</label><select name="year"><option value="">All</option>{% for y in ['1','2','3','4'] %}<option {{ 'selected' if f.year==y }}>{{ y }}</option>{% endfor %}</select></div>
+<div><label>Section / Major</label><select name="section"><option value="">All</option>{% for s in ['A','B','C'] + majors %}<option {{ 'selected' if f.section==s }}>{{ s }}</option>{% endfor %}</select></div>
+<div><label>Search name</label><input name="q" value="{{ f.q }}"></div>
+<div><label>Sort by surname</label><select name="order"><option value="asc" {{ 'selected' if order=='asc' }}>A-Z</option><option value="desc" {{ 'selected' if order=='desc' }}>Z-A</option></select></div></div>
+<button class="btn p">Apply</button> <a class="btn" href="{{ url_for('t_records') }}">Reset</a>
+<button type="button" class="btn" onclick="window.print()">Print form</button>
+<a class="btn g" href="{{ url_for('t_export', fmt='xlsx') }}?{{ qs }}">Download Excel</a>
+<a class="btn gold" href="{{ url_for('t_export', fmt='pdf') }}?{{ qs }}">Download PDF</a></form>
+<div class="grid noprint">
+<div class="card stat"><b data-count="{{ summary.present }}">{{ summary.present }}</b>Present</div>
+<div class="card stat"><b data-count="{{ summary.late }}">{{ summary.late }}</b>Late</div>
+<div class="card stat"><b data-count="{{ summary.absent }}">{{ summary.absent }}</b>Absent</div>
+<div class="card stat"><b>{{ (summary.rate ~ '%') if summary.rate is not none else '-' }}</b>Attendance rate</div></div>
+<div class="card"><h2 class="pr">QlickIn Attendance Form - {{ printed }} - Teacher: {{ session.name }}</h2>
+<p class="mu" style="margin-top:0">Showing <b>{{ rows|length }}</b> record(s) · Surname {{ 'A-Z' if order=='asc' else 'Z-A' }}</p>
+<div class="tw"><table><tr><th>#</th><th>Surname</th><th>First name</th><th>Course</th><th>Year</th><th>Section/Major</th><th>Subject</th><th>Date</th><th>Time</th><th>Status</th><th>Activity (that day)</th></tr>
+{% for r in rows %}{% set s = r.students %}<tr><td class="mu">{{ loop.index }}</td><td><b>{{ s.last_name }}</b></td>
+<td>{{ s.first_name }} {{ s.middle_initial }}.</td><td>{{ s.course }}</td><td>{{ s.year_level }}</td><td>{{ sec(s) }}</td>
+<td>{{ r.subject }}</td><td>{{ r.scan_date }}</td><td>{{ r.time12 }}</td>
+<td><span class="badge b-{{ r.status }}">{{ r.status|capitalize }}</span>
+<form class="inline noprint" method="post" action="{{ url_for('t_status', aid=r.id) }}"><input type="hidden" name="next" value="{{ next }}">
+<select name="status" onchange="this.form.submit()" title="Change status"><option value="">Change...</option>{% for x in ['present','late','absent','excused'] %}<option value="{{ x }}">{{ x|capitalize }}</option>{% endfor %}</select></form></td>
+<td style="white-space:normal;min-width:150px">{{ r.activity }}</td></tr>
+{% else %}<tr><td colspan="11" class="mu">No records match.</td></tr>{% endfor %}</table></div>
+<p class="pr" style="margin-top:50px">Signature: ______________________</p></div>
+<div class="card"><h2>Attendance summary per student</h2>
+<div class="tw"><table><tr><th>#</th><th>Surname</th><th>First name</th><th>Course</th><th>Year</th><th>Section/Major</th><th>Present</th><th>Late</th><th>Absent</th><th>Excused</th><th>Activity score</th><th>Rate</th></tr>
+{% for x in students %}{% set s = x.student %}<tr><td class="mu">{{ loop.index }}</td><td><b>{{ s.last_name }}</b></td><td>{{ s.first_name }} {{ s.middle_initial }}.</td>
+<td>{{ s.course }}</td><td>{{ s.year_level }}</td><td>{{ sec(s) }}</td><td class="ok">{{ x.present }}</td><td class="wn">{{ x.late }}</td><td class="no">{{ x.absent }}</td><td>{{ x.excused }}</td>
+<td>{% if x.act.possible %}{{ x.act.earned|num }}/{{ x.act.possible|num }} ({{ x.act.pct }}%){% else %}-{% endif %}</td>
+<td style="min-width:130px">{% if x.rate is not none %}<div class="bar" style="margin:0"><div class="track" style="height:12px"><div class="fill" style="--w:{{ x.rate }}%"></div></div><span class="pct">{{ x.rate }}%</span></div>{% else %}-{% endif %}</td></tr>
+{% else %}<tr><td colspan="12" class="mu">No data.</td></tr>{% endfor %}</table></div></div>{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block body %}
+<div class="card narrow">
+<img class="logo-lg" src="{{ url_for('static', filename='logo.svg') }}" alt="QlickIn logo">
+<h2 style="text-align:center;border:0;margin-bottom:2px">Welcome to QlickIn</h2>
+<p class="mu" style="text-align:center;margin-top:0">Sign in to continue</p>
+<form method="post"><label>Email</label><input name="email" type="email" required>
+<label>Password</label><input name="password" type="password" required>
+<button class="btn p" style="width:100%">Login</button></form>
+<p style="text-align:center;margin-bottom:0"><a href="{{ url_for('forgot') }}">Forgot password?</a></p>
+<p class="mu" style="text-align:center">Students register using the link shared by their teacher.</p></div>{% endblock %}

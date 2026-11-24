@@ -1,0 +1,44 @@
+{% extends "base.html" %}{% from "_macros.html" import file_links %}{% block body %}
+<div class="card"><h2>{{ a.title }}</h2>
+<p class="mu" style="margin-top:0">For {{ a.class_label }} · Activity date {{ a.date }} · Due {{ a.due_date or 'no due date' }} · <b>{{ a.max_score|num }} points</b></p>
+{% if a.description %}<p class="note">{{ a.description }}</p>{% endif %}
+{% if a.file_id %}<a class="btn sm" href="{{ url_for('get_file', fid=a.file_id) }}">Activity file: {{ a.file_name }}</a>{% endif %}
+<a class="btn sm" href="{{ url_for('s_activities') }}">Back</a></div>
+<div class="card"><h2>My work</h2>
+{% if sub and sub.score is not none %}<div class="msg" style="color:inherit"><b>Checked: {{ sub.score|num }} / {{ a.max_score|num }}</b> - this score is saved in your record.</div>
+{% elif sub and sub.submitted_at %}<div class="msg" style="color:inherit">Submitted {{ sub.submitted_at[:16]|replace('T', ' ') }}{% if late %} (late){% endif %}. Waiting for your teacher to check it.</div>{% endif %}
+{% if sub and sub.files %}{{ file_links(sub.files) }}{% endif %}
+{% if sub and sub.text %}<div class="note mu">{{ sub.text }}</div>{% endif %}
+{% if not locked %}
+<form method="post" enctype="multipart/form-data" id="subform">
+<label>Your answer (optional if you add a photo or file)</label><textarea name="text" rows="4">{{ sub.text if sub else '' }}</textarea>
+<label>Add your work</label>
+<div class="row">
+<label class="btn p picker">Take a picture<input type="file" name="file" accept="image/*" capture="environment" hidden></label>
+<label class="btn picker">Choose photos / files<input type="file" name="file" multiple hidden accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.zip"></label></div>
+<div id="preview" class="thumbs"></div>
+{% if sub and sub.files %}<label>Remove files you uploaded before</label>
+{% for f in sub.files %}<label class="chk"><input type="checkbox" name="remove" value="{{ f.id }}"> {{ f.name }}</label>{% endfor %}{% endif %}
+<button class="btn g" id="sendbtn">{{ 'Update my work' if sub and sub.submitted_at else 'Submit my work' }}</button></form>
+{% endif %}</div>{% endblock %}
+{% block js %}{% if not locked %}<script>
+const form=document.getElementById('subform'),prev=document.getElementById('preview');
+function showPreview(){prev.innerHTML='';form.querySelectorAll('input[type=file]').forEach(i=>[...i.files].forEach(f=>{
+  const d=document.createElement('div');d.className='th';
+  if(f.type.startsWith('image/')){const im=document.createElement('img');im.className='thumb';im.src=URL.createObjectURL(f);d.appendChild(im)}
+  const n=document.createElement('span');n.className='mu';n.textContent=f.name;d.appendChild(n);prev.appendChild(d)}))}
+form.querySelectorAll('input[type=file]').forEach(i=>i.onchange=showPreview);
+async function shrink(f){                       // make phone photos smaller before uploading
+  if(!f.type.startsWith('image/')||f.type==='image/gif')return f;
+  try{const b=await createImageBitmap(f),sc=Math.min(1,1600/Math.max(b.width,b.height));
+    const c=document.createElement('canvas');c.width=Math.round(b.width*sc);c.height=Math.round(b.height*sc);
+    c.getContext('2d').drawImage(b,0,0,c.width,c.height);
+    const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.82));
+    return new File([blob],f.name.replace(/\.\w+$/,'')+'.jpg',{type:'image/jpeg'})}catch(e){return f}}
+form.addEventListener('submit',async e=>{
+  if(form.dataset.ready)return;e.preventDefault();
+  document.getElementById('sendbtn').disabled=true;document.getElementById('sendbtn').textContent='Uploading...';
+  for(const inp of form.querySelectorAll('input[type=file]')){const dt=new DataTransfer();
+    for(const f of inp.files)dt.items.add(await shrink(f));inp.files=dt.files}
+  form.dataset.ready=1;form.submit()});
+</script>{% endif %}{% endblock %}

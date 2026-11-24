@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% from "_macros.html" import class_picker, book %}{% block body %}
+<div class="card"><h2>Upload learning material</h2>
+<form method="post" enctype="multipart/form-data">
+<label>Label (the title shown on the book cover)</label><input name="label" placeholder="Lesson 1 - Introduction to Networks" required>
+<label>Short description (shown under the title on the cover)</label><input name="description" placeholder="What will students learn in this module?">
+{{ class_picker("All students") }}
+<label>File (PDF, Word, PowerPoint, Excel, TXT, images, ZIP, MP3, MP4 - max 10 MB)</label>
+<input type="file" name="file" required>
+<button class="btn p">Upload material</button></form></div>
+<form class="card" method="get"><h2>Learning materials</h2>
+<div class="row" style="align-items:flex-end"><div><label>Search</label><input type="search" name="q" value="{{ q }}" placeholder="Search by label, description or file name"></div>
+<div style="flex:0 0 auto"><button class="btn p">Search</button> <a class="btn" href="{{ url_for('t_materials') }}">Clear</a></div></div></form>
+<div class="card">
+<div class="shelf-head"><span class="mu">{{ rows|length }} module(s){% if q %} matching "{{ q }}"{% endif %} · tap a book to open it</span>
+<div class="viewtoggle"><button type="button" class="btn sm" data-show="shelf">{{ icon('book') }} Books</button><button type="button" class="btn sm" data-show="list">{{ icon('list') }} List</button></div></div>
+<div data-pane="shelf">{% if rows %}<div class="shelf">{% for m in rows %}{{ book(m, week_ago, True) }}{% endfor %}</div>
+{% else %}<div class="empty">{{ icon('book') }}<p>{{ 'No module matches your search.' if q else 'No modules yet. Upload your first one above and it will appear here as a book.' }}</p></div>{% endif %}</div>
+<div data-pane="list" hidden><div class="tw"><table><tr><th>Label</th><th>File</th><th>For</th><th>Uploaded</th><th>Action</th></tr>
+{% for m in rows %}<tr><td style="white-space:normal;min-width:180px"><b>{{ m.label }}</b>{% if m.description %}<div class="mu">{{ m.description }}</div>{% endif %}</td>
+<td>{{ m.file_name }}<div class="mu">{{ m.size|filesize }}</div></td><td>{{ m.class_label }}</td><td>{{ m.uploaded_at[:10] }}</td>
+<td>{% if m.ext in inline_ext %}<a class="btn sm" href="{{ url_for('get_file', fid=m.file_id, view=1) }}" target="_blank">View</a> {% endif %}
+<a class="btn g sm" href="{{ url_for('get_file', fid=m.file_id) }}">Download</a>
+{% if m.ext in quiz_ext %}<a class="btn gold sm" href="{{ url_for('t_quiz_new', mid=m.id) }}">Generate quiz</a>{% endif %}
+<form class="inline" method="post" action="{{ url_for('t_material_delete', mid=m.id) }}" onsubmit="return confirm('Delete this material?')"><button class="btn r sm">Delete</button></form></td></tr>
+{% else %}<tr><td colspan="5" class="mu">{{ 'No material matches your search.' if q else 'No materials yet. Upload one above.' }}</td></tr>{% endfor %}</table></div></div></div>
+<div class="card"><h2>Generated quizzes</h2><div class="tw"><table>
+<tr><th>Quiz</th><th>From material</th><th>Items</th><th>Points</th><th>Status</th><th>Action</th></tr>
+{% for z in quizzes %}<tr><td><b>{{ z.title }}</b></td><td>{{ z.material_label }}</td><td>{{ z.n_items }}</td><td>{{ z.total|num }}</td>
+<td>{% if z.activity_id %}<span class="badge b-present">Published</span>{% else %}<span class="badge b-late">Draft</span>{% endif %}</td>
+<td><a class="btn g sm" href="{{ url_for('t_quiz', qid=z.id) }}">Open</a>
+<a class="btn sm" href="{{ url_for('t_quiz_pdf', qid=z.id) }}">PDF</a>
+<form class="inline" method="post" action="{{ url_for('t_quiz_delete', qid=z.id) }}" onsubmit="return confirm('Delete this quiz?')"><button class="btn r sm">Delete</button></form></td></tr>
+{% else %}<tr><td colspan="6" class="mu">No quizzes yet. Press "Generate quiz" on a module above.</td></tr>{% endfor %}</table></div></div>{% endblock %}

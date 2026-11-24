@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% from "_macros.html" import class_picker %}{% block body %}
+<div class="card"><h2>Post an activity / to-do</h2>
+<form method="post" enctype="multipart/form-data">
+<label>Title</label><input name="title" placeholder="Quiz 1 - Networking basics" required>
+<label>Instructions</label><textarea name="description" rows="3" placeholder="What should the students do?"></textarea>
+{{ class_picker("All students") }}
+<div class="row"><div><label>Activity date (shows in Records)</label><input type="date" name="date" value="{{ today }}" required></div>
+<div><label>Due date (optional)</label><input type="date" name="due_date"></div>
+<div><label>Total points</label><input type="number" name="max_score" value="10" min="1" max="1000" step="any" required></div></div>
+<label>Attachment (optional)</label><input type="file" name="file">
+<button class="btn p">Post activity</button></form></div>
+<div class="card"><h2>Activities</h2><div class="tw"><table>
+<tr><th>Activity</th><th>For</th><th>Date</th><th>Due</th><th>Points</th><th>Submitted</th><th>Checked</th><th>Action</th></tr>
+{% for a in rows %}<tr><td><b>{{ a.title }}</b>{% if a.kind == 'quiz' %} <span class="badge b-excused">Quiz</span>{% endif %}</td><td>{{ a.class_label }}</td><td>{{ a.date }}</td><td>{{ a.due_date or '-' }}</td><td>{{ a.max_score|num }}</td>
+<td>{{ a.submitted }}/{{ a.total }}</td><td>{{ a.checked }}/{{ a.total }}</td>
+<td><a class="btn g sm" href="{{ url_for('t_activity_check', aid=a.id) }}">Check</a>
+<form class="inline" method="post" action="{{ url_for('t_activity_delete', aid=a.id) }}" onsubmit="return confirm('Delete this activity and all its scores?')"><button class="btn r sm">Delete</button></form></td></tr>
+{% else %}<tr><td colspan="8" class="mu">No activities yet. Post one above.</td></tr>{% endfor %}</table></div></div>{% endblock %}

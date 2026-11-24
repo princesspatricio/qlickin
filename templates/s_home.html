@@ -1,0 +1,43 @@
+{% extends "base.html" %}{% block body %}
+<div class="card" style="text-align:center"><h2>My QR Code</h2>
+<img id="qr" class="qrimg" alt="My QR code">
+<p class="mu" id="qrnote">Loading your QR code...</p>
+<p><b>{{ full_name(s) }}</b><br><span class="mu">{{ label(s) }} · {{ s.email }}</span></p>
+<p class="mu">Show this QR code to your teacher to be scanned.</p></div>
+<div class="card"><h2>Quick links</h2><div class="tiles">
+<a class="tile" href="{{ url_for('s_materials') }}"><span class="tile-ic">{{ icon('book') }}</span><b>Learning modules</b><small>Read and download</small></a>
+<a class="tile" href="{{ url_for('s_activities') }}"><span class="tile-ic">{{ icon('clipboard') }}</span><b>Activities</b><small>{{ todo }} to do</small></a>
+<a class="tile" href="{{ url_for('s_att') }}"><span class="tile-ic">{{ icon('table') }}</span><b>My attendance</b><small>Dates, scores, summary</small></a>
+<a class="tile" href="{{ url_for('s_announce') }}"><span class="tile-ic">{{ icon('megaphone') }}</span><b>Announcements</b><small>News from your teacher</small></a>
+<a class="tile" href="{{ url_for('s_notifs') }}"><span class="tile-ic">{{ icon('bell') }}</span><b>Notifications</b><small>{{ unread }} new</small></a>
+<a class="tile" href="{{ url_for('s_profile') }}"><span class="tile-ic">{{ icon('user') }}</span><b>My profile</b><small>Details and password</small></a></div></div>
+<div class="grid">
+<div class="card stat"><b data-count="{{ sm.present }}">{{ sm.present }}</b>Present</div>
+<div class="card stat"><b data-count="{{ sm.late }}">{{ sm.late }}</b>Late</div>
+<div class="card stat"><b data-count="{{ sm.absent }}">{{ sm.absent }}</b>Absent</div>
+<div class="card stat"><b>{{ (sm.rate ~ '%') if sm.rate is not none else '-' }}</b>Attendance rate</div></div>
+<div class="grid2" style="margin-top:16px">
+<div class="card"><h2>Latest announcements</h2>
+{% for a in ann %}<div class="msg" style="color:inherit"><b>{{ a.title }}</b><div class="note">{{ a.message }}</div><div class="mu">{{ a.created_at[:10] }}</div></div>
+{% else %}<p class="mu">No announcements yet.</p>{% endfor %}
+<a class="btn sm" href="{{ url_for('s_announce') }}">All announcements</a></div>
+<div class="card"><h2>My to-do list</h2>
+{% for a in todo_list %}<div class="msg" style="color:inherit"><b><a href="{{ url_for('s_activity', aid=a.id) }}">{{ a.title }}</a></b>
+{% if a.due_date and a.due_date < today %}<span class="badge b-absent">Overdue</span>{% else %}<span class="badge b-late">To do</span>{% endif %}
+<div class="mu">Due {{ a.due_date or 'no due date' }} · {{ a.max_score|num }} points</div></div>
+{% else %}<p class="mu">You are all caught up!</p>{% endfor %}
+<a class="btn sm" href="{{ url_for('s_activities') }}">All activities</a></div></div>{% endblock %}
+{% block js %}<script>
+const img=document.getElementById('qr'),note=document.getElementById('qrnote');let timer;
+async function refresh(){
+  try{
+    const r=await fetch('{{ url_for("s_qr") }}',{cache:'no-store'});
+    const rem=parseInt(r.headers.get('X-Remaining')||'0',10),rot=r.headers.get('X-Rotating')==='1';
+    img.src=URL.createObjectURL(await r.blob());clearInterval(timer);
+    if(rot){let left=rem;note.textContent='For security, this QR code refreshes in '+left+'s';
+      timer=setInterval(()=>{left--;if(left<=0){clearInterval(timer);refresh();return}note.textContent='For security, this QR code refreshes in '+left+'s'},1000)}
+    else note.textContent='Your QR code';
+  }catch(e){note.textContent='Could not load the QR code. Refresh the page.'}
+}
+refresh();
+</script>{% endblock %}

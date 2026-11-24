@@ -1,0 +1,29 @@
+<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>QlickIn</title>
+<script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'light')}catch(e){}</script>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='logo.svg') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="{{ url_for('static', filename='app.js') }}" defer></script></head><body>
+{{ icon_sprite() }}
+<header class="top">
+<a class="brand" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='logo.svg') }}" alt="QlickIn logo">
+<span><h1>QlickIn</h1><small>Scan. Answer. Present.</small></span></a>
+<button id="theme" class="switch" type="button" aria-label="Switch dark / light mode" title="Dark / light mode"><span></span></button>
+</header>
+<div class="layout {{ 'has-side' if session.role }}">
+{% if session.role %}<aside class="side">
+<div class="side-title">{{ 'Teacher menu' if session.role == 'teacher' else 'Student menu' }}</div>
+{% if session.role == 'teacher' %}
+{% for ep, lbl, ic in [('t_home','Home','home'),('t_regs','Registrations','users'),('t_sessions','Subject Sessions','calendar'),('t_questions','Question Manager','help'),('t_scan','Scan Attendance','scan'),('t_records','Records','table'),('t_materials','Learning Materials','book'),('t_activities','Activities','clipboard'),('t_announce','Announcements','megaphone'),('t_activity','History Log','history'),('t_settings','Settings','settings')] %}
+<a class="{{ 'on' if request.endpoint == ep }}" href="{{ url_for(ep) }}"><span class="lbl">{{ icon(ic) }}{{ lbl }}</span></a>{% endfor %}
+{% else %}
+{% for ep, lbl, ic in [('s_home','Home (QR)','qr'),('s_att','My Attendance','table'),('s_materials','Learning Materials','book'),('s_activities','Activities','clipboard'),('s_announce','Announcements','megaphone'),('s_notifs','Notifications','bell'),('s_profile','My Profile','user')] %}
+<a class="{{ 'on' if request.endpoint == ep }}" href="{{ url_for(ep) }}"><span class="lbl">{{ icon(ic) }}{{ lbl }}</span>{% if ep == 's_notifs' and unread %}<span class="badge-n">{{ unread }}</span>{% endif %}{% if ep == 's_activities' and todo %}<span class="badge-n">{{ todo }}</span>{% endif %}</a>{% endfor %}
+{% endif %}
+<div class="side-bottom"><div class="side-user">{{ icon('user') }} {{ session.name }}</div>
+<a class="logout" href="{{ url_for('logout') }}"><span class="lbl">{{ icon('logout') }}Logout</span></a></div>
+</aside>{% endif %}
+<main class="wrap">
+{% for m in get_flashed_messages() %}<div class="msg">{{ m }}</div>{% endfor %}
+{% block body %}{% endblock %}
+</main></div>{% block js %}{% endblock %}</body></html>

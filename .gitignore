@@ -1,0 +1,7 @@
+.env
+venv/
+.venv/
+__pycache__/
+serviceAccountKey.json
+.idea/
+email_preview.html

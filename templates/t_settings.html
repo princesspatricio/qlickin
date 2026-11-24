@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block body %}
+<div class="card" style="max-width:680px"><h2>Settings</h2>
+<form method="post">
+<label class="chk"><input type="checkbox" name="rotate_qr" value="1" {{ 'checked' if cfg.rotate_qr }}> Rotating QR code (a screenshot stops working after a few minutes)</label>
+<label>QR code refreshes every</label>
+<select name="rotate_seconds">{% for s in [60,120,180,300] %}<option value="{{ s }}" {{ 'selected' if cfg.rotate_seconds==s }}>{{ s // 60 }} minute{{ 's' if s > 60 }}</option>{% endfor %}</select>
+<label class="chk"><input type="checkbox" name="email_on_present" value="1" {{ 'checked' if cfg.email_on_present }}> Also email the student when they are marked present / late</label>
+<h3>Quizzes</h3>
+<label class="chk"><input type="checkbox" name="email_quiz_student" value="1" {{ 'checked' if cfg.email_quiz_student }}> Email each student their score right after they submit a quiz</label>
+<label class="chk"><input type="checkbox" name="email_quiz_teacher" value="1" {{ 'checked' if cfg.email_quiz_teacher }}> Email me when a student finishes a quiz</label>
+<label>Passing percentage</label><input type="number" name="pass_percent" min="1" max="100" value="{{ cfg.pass_percent }}" style="width:110px">
+<p class="mu">In-app notifications are always sent. When the rotating QR code is ON, emails explain that the QR is live in the portal; when it is OFF, emails include the QR image.</p>
+<button class="btn p">Save settings</button></form></div>{% endblock %}

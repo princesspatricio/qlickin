@@ -1,0 +1,38 @@
+{% extends "base.html" %}{% block body %}
+{% if mode == 'intro' %}
+<div class="card"><h2>{{ a.title }}</h2>
+<p class="mu" style="margin-top:0">{{ quiz.n_items }} item(s) · <b>{{ a.max_score|num }} points</b> · Due {{ a.due_date or 'no due date' }}{% if a.time_limit %} · Time limit: <b>{{ a.time_limit }} minutes</b>{% endif %}</p>
+<div class="msg" style="color:inherit">You can take this quiz <b>one time only</b>. {% if a.time_limit %}When you press Start, the timer begins and your answers are sent automatically when time is up.{% endif %}</div>
+<form method="post" action="{{ url_for('s_quiz_start', aid=a.id) }}"><button class="btn g">Start quiz</button> <a class="btn" href="{{ url_for('s_activities') }}">Back</a></form></div>
+{% elif mode == 'take' %}
+<div class="card"><h2>{{ a.title }}</h2>
+{% if left is not none %}<div class="timer">Time left: <b id="tl">--:--</b></div>{% endif %}
+<form method="post" action="{{ url_for('s_quiz_submit', aid=a.id) }}" id="qform">
+{% for q in qs %}<div class="qitem">
+<div class="qhead"><b>{{ q.pos }}{% if q.type == 'match' %}-{{ q.pos + q.terms|length - 1 }}{% endif %}.</b><span class="badge b-excused">{{ type_names[q.type] }}</span><span class="mu" style="margin-left:auto">{{ q.points|num }} pt{{ 's' if q.points != 1 }}{{ ' each' if q.type == 'match' }}</span></div>
+<div class="note">{{ q.q }}</div>
+{% if q.type == 'mc' %}{% for c in q.choices %}<label class="choice"><input type="radio" name="ans_{{ q.idx }}" value="{{ c }}" style="width:auto"> <span>{{ 'ABCDEFGH'[loop.index0] }}. {{ c }}</span></label>{% endfor %}
+{% elif q.type == 'tf' %}<label class="choice"><input type="radio" name="ans_{{ q.idx }}" value="True" style="width:auto"> True</label><label class="choice"><input type="radio" name="ans_{{ q.idx }}" value="False" style="width:auto"> False</label>
+{% elif q.type == 'match' %}<div class="tw"><table>{% for term in q.terms %}{% set k = loop.index0 %}<tr><td style="white-space:normal">{{ q.pos + k }}. <b>{{ term }}</b></td>
+<td style="white-space:normal"><select name="ans_{{ q.idx }}_{{ k }}"><option value="">Choose...</option>{% for d in q.defs %}<option value="{{ d }}">{{ 'ABCDEFGHIJKLMNOP'[loop.index0] }}. {{ d }}</option>{% endfor %}</select></td></tr>{% endfor %}</table></div>
+{% else %}<input name="ans_{{ q.idx }}" autocomplete="off" placeholder="Type your answer">{% endif %}
+</div>{% endfor %}
+<button class="btn g" onclick="return confirm('Submit your answers now? You cannot change them after.')">Submit quiz</button></form></div>
+{% else %}
+<div class="card" style="text-align:center"><h2>{{ a.title }} - Result</h2>
+<div class="score-ring" style="--p:{{ pct }}"><span>{{ pct }}%</span></div>
+<div class="stat"><b style="font-size:38px">{{ final|num }} / {{ a.max_score|num }}</b></div>
+<p><span class="remark {{ 'pass' if remark == 'Passed' else 'fail' }}">{{ remark }}</span></p>
+<p class="mu">Checked automatically and saved in your record · Time taken {{ taken }}{% if att.overtime %} <span class="badge b-late">Over the time limit</span>{% endif %}{% if att.email_status == 'sent' %}<br>A copy of your result was emailed to you.{% endif %}</p>
+<a class="btn" href="{{ url_for('s_activities') }}">Back to activities</a></div>
+{% if a.show_answers %}<div class="card"><h2>Review your answers</h2>
+{% for d in att.detail %}<div class="qitem"><div class="qhead"><b>Item {{ loop.index }}</b><span class="badge b-excused">{{ type_names[d.type] }}</span>
+<span class="badge {{ 'b-present' if d.earned == d.max else 'b-late' if d.earned > 0 else 'b-absent' }}" style="margin-left:auto">{{ d.earned|num }} / {{ d.max|num }}</span></div>
+{% if d.type == 'match' %}<div class="note">{{ d.q }}</div>{% for r in d.rows %}<div class="{{ 'ok' if r.ok else 'no' }}"><b>{{ r.term }}</b> → {{ r.given or '(no answer)' }}{% if not r.ok %}<div class="mu">Correct: {{ r.correct }}</div>{% endif %}</div>{% endfor %}
+{% else %}<div class="note">{{ d.q }}</div><div class="{{ 'ok' if d.ok else 'no' }}">Your answer: {{ d.given or '(no answer)' }}</div>{% if not d.ok %}<div class="mu">Correct answer: {{ d.correct }}</div>{% endif %}{% endif %}</div>{% endfor %}</div>{% endif %}
+{% endif %}{% endblock %}
+{% block js %}{% if mode == 'take' and left is not none %}<script>
+let left={{ left }};const tl=document.getElementById('tl'),f=document.getElementById('qform');
+function tick(){const m=Math.floor(left/60),s=left%60;tl.textContent=m+':'+String(s).padStart(2,'0');tl.parentElement.classList.toggle('low',left<=60);
+  if(left<=0){f.submit();return}left--;setTimeout(tick,1000)}tick();
+</script>{% endif %}{% endblock %}

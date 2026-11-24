@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h2>Subject Sessions</h2>
+<p class="mu" style="margin-top:0">Create a session for each subject and class, for example "Programming 1 - BSIT 2-B, Monday 8:00 AM". Attendance is recorded per session. A student who scans more than the late minutes after the start time is marked Late.</p>
+<form method="post">
+<div class="row"><div><label>Subject</label><input name="subject" placeholder="Programming 1" required></div>
+<div><label>Day</label><select name="day">{% for d in days %}<option>{{ d }}</option>{% endfor %}</select></div>
+<div><label>Start time</label><input type="time" name="start_time" value="08:00" required></div>
+<div><label>Late after (minutes)</label><input type="number" name="late_minutes" value="15" min="0" max="180" required></div></div>
+<div class="row"><div><label>Course</label><select name="course" id="course">{% for c in courses %}<option>{{ c }}</option>{% endfor %}</select></div>
+<div><label>Year</label><select name="year"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+<div id="sw"><label>Section</label><select name="section"><option>A</option><option>B</option><option>C</option></select></div>
+<div id="mw" hidden><label>Major</label><select name="major">{% for m in majors %}<option>{{ m }}</option>{% endfor %}</select></div></div>
+<button class="btn p">Create session</button></form></div>
+<div class="card"><h2>Your sessions</h2><div class="tw"><table>
+<tr><th>Subject</th><th>Class</th><th>Day</th><th>Start</th><th>Late after</th><th>Action</th></tr>
+{% for x in rows %}<tr><td><b>{{ x.subject }}</b></td><td>{{ x.class_label }}</td><td>{{ x.day }}</td><td>{{ hhmm12(x.start_time) }}</td><td>{{ x.late_minutes }} min</td>
+<td><a class="btn g sm" href="{{ url_for('t_scan', session=x.id) }}">Scan</a>
+<form class="inline" method="post" action="{{ url_for('t_session_delete', sid=x.id) }}" onsubmit="return confirm('Delete this session? Past records stay in Records.')"><button class="btn r sm">Delete</button></form></td></tr>
+{% else %}<tr><td colspan="6" class="mu">No sessions yet. Create one above.</td></tr>{% endfor %}</table></div></div>{% endblock %}
+{% block js %}<script>
+const c=document.getElementById('course');
+function t(){const b=c.value==='BSED';document.getElementById('sw').hidden=b;document.getElementById('mw').hidden=!b}
+c.onchange=t;t();
+</script>{% endblock %}

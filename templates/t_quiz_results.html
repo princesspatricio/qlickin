@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h2>{{ quiz.title }} - Results</h2>
+<p class="mu" style="margin-top:0">{{ a.class_label }} · {{ a.max_score|num }} points · Passing: {{ sm.pass_percent }}% · Every submitted quiz is checked and recorded automatically.</p>
+<div class="grid"><div class="card stat"><b>{{ sm.done }}/{{ sm.total }}</b>Submitted</div><div class="card stat"><b>{{ sm.avg if sm.avg is not none else '-' }}{{ '%' if sm.avg is not none }}</b>Class average</div>
+<div class="card stat"><b>{{ sm.passed }}</b>Passed</div><div class="card stat"><b>{{ sm.progress }}</b>Started, not submitted</div></div>
+<a class="btn gold sm" href="{{ url_for('t_quiz_results_csv', qid=quiz.id) }}">Download results (CSV / Excel)</a>
+<a class="btn sm" href="{{ url_for('t_quiz', qid=quiz.id) }}">Back to quiz</a> <a class="btn sm" href="{{ url_for('t_records') }}">Open Records</a></div>
+<div class="card"><div class="tw"><table><tr><th>#</th><th>Student</th><th>Status</th><th>Score</th><th>%</th><th>Remarks</th><th>Time</th><th>Submitted</th><th>Email</th><th></th></tr>
+{% for r in rows %}<tr><td class="mu">{{ loop.index }}</td><td><b>{{ full_name(r.s) }}</b><div class="mu">{{ label(r.s) }}</div></td>
+<td>{% if r.status == 'submitted' %}<span class="badge b-present">Submitted</span>{% if r.over %} <span class="badge b-late">Over time</span>{% endif %}{% elif r.status == 'progress' %}<span class="badge b-late">Not submitted</span>{% else %}<span class="badge b-absent">Not taken</span>{% endif %}</td>
+<td>{% if r.score is not none %}<b>{{ r.score|num }}</b> / {{ a.max_score|num }}{% else %}-{% endif %}</td><td>{{ r.pct if r.pct is not none else '-' }}</td>
+<td>{% if r.pct is not none %}<span class="{{ 'ok' if r.remark == 'Passed' else 'no' }}">{{ r.remark }}</span>{% else %}-{% endif %}</td><td>{{ r.taken }}</td><td>{{ r.at }}</td>
+<td>{{ {'sent':'Sent','failed':'Failed','queued':'Sending...','not_sent':'Off'}.get(r.email, '-') }}</td>
+<td>{% if r.status == 'submitted' %}<a class="btn sm" href="{{ url_for('t_quiz_attempt', qid=quiz.id, sid=r.s.id) }}">Answers</a>{% endif %}
+{% if r.status != 'none' %}<form class="inline" method="post" action="{{ url_for('t_quiz_retake', qid=quiz.id, sid=r.s.id) }}" onsubmit="return confirm('Delete this attempt and let the student take the quiz again?')"><button class="btn sm">Allow retake</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="10" class="mu">No approved students in this class yet.</td></tr>{% endfor %}</table></div></div>{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% from "_macros.html" import file_links %}{% block body %}
+<div class="card"><h2>{{ a.title }}</h2>
+<p class="mu" style="margin-top:0">For {{ a.class_label }} · Activity date {{ a.date }} · Due {{ a.due_date or 'no due date' }} · <b>{{ a.max_score|num }} points</b></p>
+{% if a.description %}<p class="note">{{ a.description }}</p>{% endif %}
+{% if a.file_id %}<a class="btn sm" href="{{ url_for('get_file', fid=a.file_id) }}">Attachment: {{ a.file_name }}</a>{% endif %}
+<a class="btn sm" href="{{ url_for('t_activities') }}">Back to activities</a></div>
+<div class="card"><h2>Check students' work</h2>
+<p class="mu" style="margin-top:0">Type a score for each student (or press <b>Full</b> / <b>0</b>), then press <b>Save scores</b>. Scores are recorded automatically in Records and on each student's page.</p>
+<form method="post"><input type="hidden" name="action" value="save">
+<div class="tw"><table><tr><th>#</th><th>Student</th><th>Status</th><th>Their work</th><th>Score / {{ a.max_score|num }}</th></tr>
+{% for s in studs %}{% set sub = s.sub %}<tr><td class="mu">{{ loop.index }}</td><td><b>{{ full_name(s) }}</b><div class="mu">{{ label(s) }}</div></td>
+<td>{% if sub and sub.score is not none %}<span class="badge b-present">Checked</span>{% elif sub and sub.submitted_at %}<span class="badge b-late">Submitted</span>{% else %}<span class="badge b-absent">Not submitted</span>{% endif %}
+{% if sub and sub.submitted_at and a.due_date and sub.submitted_at[:10] > a.due_date %}<span class="badge b-late">Late</span>{% endif %}</td>
+<td style="white-space:normal;min-width:220px">{% if sub and sub.submitted_at %}
+{% if sub.text %}<details><summary>Read answer</summary><div class="note">{{ sub.text }}</div></details>{% endif %}
+{% if sub.files %}{{ file_links(sub.files) }}{% endif %}
+<div class="mu">Submitted {{ sub.submitted_at[:16]|replace('T', ' ') }}</div>{% else %}-{% endif %}</td>
+<td><input type="number" name="score_{{ s.id }}" id="sc_{{ s.id }}" min="0" max="{{ a.max_score }}" step="any" value="{{ sub.score|num if sub else '' }}" style="width:90px">
+<button type="button" class="btn g sm" onclick="document.getElementById('sc_{{ s.id }}').value='{{ a.max_score|num }}'">Full</button>
+<button type="button" class="btn sm" onclick="document.getElementById('sc_{{ s.id }}').value='0'">0</button></td></tr>
+{% else %}<tr><td colspan="5" class="mu">No approved students in this class yet.</td></tr>{% endfor %}</table></div>
+<button class="btn p">Save scores</button></form>
+<form method="post" style="display:inline"><input type="hidden" name="action" value="full">
+<button class="btn gold">Give full marks to everyone who submitted</button></form></div>{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% from "_macros.html" import book %}{% block body %}
+<form class="card" method="get"><h2>Learning Materials</h2>
+<div class="row" style="align-items:flex-end"><div><label>Search</label><input type="search" name="q" value="{{ q }}" placeholder="Search by label, description or file name"></div>
+<div style="flex:0 0 auto"><button class="btn p">Search</button> <a class="btn" href="{{ url_for('s_materials') }}">Clear</a></div></div></form>
+<div class="card">
+<div class="shelf-head"><span class="mu">{{ rows|length }} module(s){% if q %} matching "{{ q }}"{% endif %} · tap a book to open it</span>
+<div class="viewtoggle"><button type="button" class="btn sm" data-show="shelf">{{ icon('book') }} Books</button><button type="button" class="btn sm" data-show="list">{{ icon('list') }} List</button></div></div>
+<div data-pane="shelf">{% if rows %}<div class="shelf">{% for m in rows %}{{ book(m, week_ago, False) }}{% endfor %}</div>
+{% else %}<div class="empty">{{ icon('book') }}<p>{{ 'No module matches your search.' if q else 'No learning modules yet. Your teacher will add them here.' }}</p></div>{% endif %}</div>
+<div data-pane="list" hidden>
+{% for m in rows %}<div class="qitem"><h3 style="margin-top:0">{{ m.label }}</h3>
+{% if m.description %}<p class="note" style="margin:0 0 6px">{{ m.description }}</p>{% endif %}
+<p class="mu" style="margin:0 0 8px">{{ m.file_name }} · {{ m.size|filesize }} · uploaded {{ m.uploaded_at[:10] }}</p>
+{% if m.ext in inline_ext %}<a class="btn sm" href="{{ url_for('get_file', fid=m.file_id, view=1) }}" target="_blank">View</a> {% endif %}
+<a class="btn g sm" href="{{ url_for('get_file', fid=m.file_id) }}">Download</a></div>
+{% else %}<p class="mu" style="margin:0">{{ 'No material matches your search.' if q else 'No learning materials yet.' }}</p>{% endfor %}</div></div>{% endblock %}

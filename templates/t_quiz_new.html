@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h2>Generate a quiz</h2>
+<p class="mu" style="margin-top:0">From: <b>{{ m.label }}</b> ({{ m.file_name }}). Choose the types of questions, how many of each and the points. You can mix types. You can review and edit everything before students see it.</p>
+<form method="post">
+<div class="row"><div style="flex:2"><label>Quiz title</label><input name="title" value="Quiz - {{ m.label }}" required></div>
+<div><label>Difficulty</label><select name="level"><option value="easy">Easy - common words, random wrong choices</option><option value="medium" selected>Medium</option><option value="hard">Hard - long key terms, look-alike wrong choices</option></select></div></div>
+<div class="tw"><table><tr><th>Use</th><th>Quiz type</th><th>Items</th><th>Points each</th></tr>
+{% for t, name, instr in quiz_types %}<tr><td><input type="checkbox" name="use_{{ t }}" value="1" class="use" style="width:auto" {{ 'checked' if t in ['mc', 'tf'] }}></td>
+<td style="white-space:normal"><b>{{ name }}</b><div class="mu">{{ instr }}</div></td>
+<td><input type="number" name="n_{{ t }}" class="n" value="{{ {'mc': 10, 'tf': 5, 'id': 5, 'fib': 5, 'match': 5}[t] }}" min="1" max="{{ max_items }}" style="width:90px"></td>
+<td><input type="number" name="p_{{ t }}" class="p" value="{{ {'mc': 1, 'tf': 1, 'id': 2, 'fib': 1, 'match': 1}[t] }}" min="0.5" max="100" step="any" style="width:90px"></td></tr>{% endfor %}</table></div>
+<div class="msg" id="sum" style="color:inherit;margin-top:12px"></div>
+<p class="mu">Tips: "Matching type" counts pairs and needs definition-style sentences in the file (for example "A router is a device that..."). Identification works best with the same kind of sentences. If the file has too few usable sentences, you are told how many items could be made.</p>
+<button class="btn p">Generate quiz</button> <a class="btn" href="{{ url_for('t_materials') }}">Cancel</a></form></div>{% endblock %}
+{% block js %}<script>
+const MAX={{ max_items }};
+function calc(){let n=0,p=0;document.querySelectorAll('tbody tr').forEach(r=>{const u=r.querySelector('.use');if(u&&u.checked){const a=+r.querySelector('.n').value||0,b=+r.querySelector('.p').value||0;n+=a;p+=a*b}});
+  const s=document.getElementById('sum');s.textContent='Total: '+n+' item(s) · '+(Math.round(p*100)/100)+' point(s)'+(n>MAX?'  - too many! The most allowed is '+MAX+'.':'');s.style.borderColor=n>MAX?'#c0392b':'#d4af37'}
+document.querySelectorAll('input').forEach(i=>i.addEventListener('input',calc));calc();
+</script>{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% block body %}
+<div class="grid">
+<div class="card stat"><b data-count="{{ pending }}">{{ pending }}</b>Pending registrations</div>
+<div class="card stat"><b data-count="{{ present }}">{{ present }}</b>Present / late today</div>
+<div class="card stat"><b data-count="{{ absent }}">{{ absent }}</b>Absent today</div>
+<div class="card stat"><b data-count="{{ approved }}">{{ approved }}</b>Approved students</div></div>
+<div class="card"><h2>Quick actions</h2><div class="tiles">
+<a class="tile" href="{{ url_for('t_scan') }}"><span class="tile-ic">{{ icon('scan') }}</span><b>Scan attendance</b><small>Open the QR scanner</small></a>
+<a class="tile" href="{{ url_for('t_regs') }}"><span class="tile-ic">{{ icon('users') }}</span><b>Registrations</b><small>{{ pending }} waiting for approval</small></a>
+<a class="tile" href="{{ url_for('t_materials') }}"><span class="tile-ic">{{ icon('book') }}</span><b>Learning modules</b><small>Upload, search, make quizzes</small></a>
+<a class="tile" href="{{ url_for('t_activities') }}"><span class="tile-ic">{{ icon('clipboard') }}</span><b>Activities</b><small>Post work and check scores</small></a>
+<a class="tile" href="{{ url_for('t_announce') }}"><span class="tile-ic">{{ icon('megaphone') }}</span><b>Announcements</b><small>Tell your students</small></a>
+<a class="tile" href="{{ url_for('t_records') }}"><span class="tile-ic">{{ icon('table') }}</span><b>Records</b><small>Filter, print, download</small></a>
+<a class="tile" href="{{ url_for('t_questions') }}"><span class="tile-ic">{{ icon('help') }}</span><b>Question Manager</b><small>Scan question pool</small></a>
+<a class="tile" href="{{ url_for('t_sessions') }}"><span class="tile-ic">{{ icon('calendar') }}</span><b>Subject sessions</b><small>Classes and schedules</small></a></div></div>
+<div class="card"><h2>Student Registration Link</h2>
+<div class="row"><input id="lnk" readonly value="{{ link }}">
+<button class="btn" style="flex:0 0 auto;margin:0" onclick="navigator.clipboard.writeText(document.getElementById('lnk').value);this.textContent='Copied'">Copy</button></div>
+<form method="post" action="{{ url_for('t_toggle') }}"><p>Registration is <b>{{ 'OPEN' if reg_open else 'CLOSED' }}</b>
+<button class="btn sm">{{ 'Close' if reg_open else 'Open' }} registration</button></p></form></div>
+<div class="grid2">
+<div class="card"><h2>Attendance rate per class</h2>
+{% for c in class_rates %}<div class="bar"><span class="lbl">{{ c.label }}</span><div class="track"><div class="fill" style="--w:{{ c.pct }}%"></div></div><span class="pct">{{ c.pct }}%</span></div>
+{% else %}<p class="mu">No attendance data yet.</p>{% endfor %}</div>
+<div class="card"><h2>Attendance rate per week</h2>
+<div class="cols">{% for w in weeks %}<div class="col"><span class="pct">{{ (w.pct ~ '%') if w.pct is not none else '-' }}</span>
+<div class="vtrack"><div class="vfill" style="--h:{{ w.pct or 0 }}%"></div></div><small>{{ w.label }}</small></div>{% endfor %}</div></div></div>
+<div class="card"><h2>Students with the most absences</h2>
+{% if top_abs %}<div class="tw"><table><tr><th>#</th><th>Student</th><th>Class</th><th>Absences</th></tr>
+{% for x in top_abs %}<tr><td>{{ loop.index }}</td><td><b>{{ full_name(x.student) }}</b></td><td>{{ label(x.student) }}</td><td class="no">{{ x.count }}</td></tr>{% endfor %}</table></div>
+{% else %}<p class="mu">No absences recorded yet.</p>{% endif %}</div>{% endblock %}

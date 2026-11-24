@@ -1,0 +1,58 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h2>Scan Attendance</h2>
+{% if not sessions %}<p>No subject sessions yet. <a href="{{ url_for('t_sessions') }}"><b>Create a session first.</b></a></p>
+{% else %}
+<label>Subject session</label>
+<select id="session">{% for x in sessions %}<option value="{{ x.id }}" data-class="{{ x.class_key }}" {{ 'selected' if sel == x.id }}>{{ sess_label(x) }}</option>{% endfor %}</select>
+<button class="btn p" id="go">Start camera</button> <button class="btn" id="stop" hidden>Stop</button>
+<div id="reader"></div>
+<label>No camera? Paste the student's QR text:</label>
+<div class="row"><input id="manual" placeholder="QR text"><button class="btn" style="flex:0 0 auto;margin:0" id="mbtn">Submit</button></div>
+<div class="msg" id="status" style="margin-top:12px;color:inherit" hidden></div>
+<ul class="recent" id="recent"></ul>
+<form method="post" id="endform" onsubmit="return confirm('End the class and mark all students who did not scan as Absent?')">
+<button class="btn r">End class &amp; mark absent</button></form></div>
+<div class="card"><h2>Manual attendance</h2>
+<p class="mu" style="margin-top:0">For a dead phone or a QR that will not scan. Choose the session, student and status.</p>
+<form method="post" action="{{ url_for('t_manual') }}">
+<input type="hidden" name="session_id" id="msession">
+<div class="row"><div><label>Student (from the selected session's class)</label>
+<select name="student_id" id="mstudent">{% for s in studs %}<option value="{{ s.id }}" data-class="{{ s.ckey }}">{{ full_name(s) }} - {{ label(s) }}</option>{% endfor %}</select></div>
+<div><label>Date</label><input type="date" name="date" value="{{ today }}"></div>
+<div><label>Status</label><select name="status"><option value="present">Present</option><option value="late">Late</option><option value="excused">Excused</option><option value="absent">Absent</option></select></div></div>
+<label>Note (optional)</label><input name="note" placeholder="e.g. phone battery died / medical certificate">
+<p class="mu" id="mhint" hidden>There are no approved students in the class of this session yet.</p>
+<button class="btn g" id="msave">Save attendance</button></form></div>
+<div class="modal" id="modal"><div class="card"><h2 id="mname"></h2><p class="mu" id="mtime"></p>
+<p id="mq"></p><div id="mchoices"></div></div></div>{% endif %}{% endblock %}
+{% block js %}{% if sessions %}<script src="https://unpkg.com/html5-qrcode"></script><script>
+const $=id=>document.getElementById(id);let busy=false,scanner=null;
+const post=(u,b)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json());
+function sync(){const s=$('session'),opt=s.options[s.selectedIndex];
+  $('msession').value=s.value;$('endform').action='/teacher/sessions/'+s.value+'/finalize';
+  let first=null;[...$('mstudent').options].forEach(o=>{const ok=o.dataset.class===opt.dataset.class;o.hidden=!ok;o.disabled=!ok;if(ok&&!first)first=o});
+  if(first)$('mstudent').value=first.value;
+  $('mhint').hidden=!!first;$('msave').disabled=!first}
+$('session').onchange=sync;sync();
+function say(t,ok){const s=$('status');s.hidden=false;s.textContent=t;s.style.borderColor=ok?'#12805c':'#c0392b'}
+function addRecent(t){const li=document.createElement('li');li.textContent=t;$('recent').prepend(li)}
+async function handle(text){
+  if(busy)return;busy=true;
+  const d=await post('/api/scan',{qr_token:text,session_id:$('session').value});
+  if(!d.ok){say('X '+d.error,false);setTimeout(()=>busy=false,1500);return}
+  $('mname').textContent=d.student;$('mtime').textContent='Scanned at '+d.time+' ('+d.status.toUpperCase()+') - the student answers below';
+  $('mq').textContent=d.question;$('mchoices').innerHTML='';
+  d.choices.forEach(c=>{const b=document.createElement('button');b.className='btn opt';b.textContent=c;
+    b.onclick=async()=>{const r=await post('/api/answer',{attendance_id:d.attendance_id,answer:c});
+      $('modal').style.display='none';
+      const m=(r.correct?'Correct - ':'Incorrect (answer: '+r.correct_answer+') - ')+d.student+' marked '+d.status.toUpperCase()+' at '+d.time;
+      say(m,r.correct);addRecent(m);setTimeout(()=>busy=false,800)};
+    $('mchoices').appendChild(b)});
+  $('modal').style.display='flex';
+}
+$('go').onclick=()=>{scanner=new Html5Qrcode('reader');
+  scanner.start({facingMode:'environment'},{fps:10,qrbox:240},handle).then(()=>{$('stop').hidden=false})
+  .catch(e=>say('Camera error: '+e+' (the camera needs HTTPS or localhost)',false))};
+$('stop').onclick=()=>{scanner.stop().then(()=>{$('stop').hidden=true;$('reader').innerHTML=''})};
+$('mbtn').onclick=()=>{if($('manual').value)handle($('manual').value.trim())};
+</script>{% endif %}{% endblock %}

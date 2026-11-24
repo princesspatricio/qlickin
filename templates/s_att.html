@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block body %}
+<form class="card" method="get"><h2>My Attendance</h2>
+<div class="row" style="align-items:flex-end"><div style="max-width:240px"><label>Month</label><input type="month" name="month" value="{{ month }}"></div>
+<div style="flex:0 0 auto"><button class="btn p">Filter</button> <a class="btn" href="{{ url_for('s_att') }}">All</a></div></div></form>
+<div class="grid">
+<div class="card stat"><b data-count="{{ sm.present }}">{{ sm.present }}</b>Present</div>
+<div class="card stat"><b data-count="{{ sm.late }}">{{ sm.late }}</b>Late</div>
+<div class="card stat"><b data-count="{{ sm.absent }}">{{ sm.absent }}</b>Absent</div>
+<div class="card stat"><b>{{ (sm.rate ~ '%') if sm.rate is not none else '-' }}</b>Attendance rate<br><span class="mu">Excused: {{ sm.excused }}</span></div></div>
+<div class="card"><div class="tw"><table><tr><th>Date</th><th>Subject</th><th>Time of scan</th><th>Status</th><th>Answer</th><th>Activity (that day)</th></tr>
+{% for r in rows %}<tr><td>{{ r.scan_date }}</td><td>{{ r.subject }}</td><td>{{ r.time12 }}</td><td><span class="badge b-{{ r.status }}">{{ r.status|capitalize }}</span></td>
+<td class="{{ 'ok' if r.answer=='Correct' else 'no' if r.answer=='Incorrect' else 'mu' }}">{{ r.answer }}</td><td style="white-space:normal">{{ r.activity }}</td></tr>
+{% else %}<tr><td colspan="6" class="mu">No attendance found.</td></tr>{% endfor %}</table></div></div>{% endblock %}

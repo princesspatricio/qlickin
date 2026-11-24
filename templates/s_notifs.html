@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block body %}
+<div class="card"><h2>Notifications</h2>
+{% for n in rows %}<div class="msg" style="color:inherit"><b>{{ n.message }}</b><div class="mu">{{ n.when }}{% if not n.read %} · new{% endif %}</div></div>
+{% else %}<p class="mu">No notifications yet.</p>{% endfor %}</div>{% endblock %}
