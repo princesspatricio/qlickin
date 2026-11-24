@@ -198,6 +198,22 @@ def resolve_qr(text):
 
 
 # ---------- email ----------
+MAIL_ERR = {"msg": ""}          # the reason the last email failed (shown to the teacher)
+
+def mail_fail_text():
+    m = MAIL_ERR["msg"] or ""
+    low = m.lower()
+    if "only send testing emails" in low or "your own email" in low:
+        hint = ("Resend is in test mode: with onboarding@resend.dev it only delivers to the email your Resend account was created with. "
+                "Verify a domain in Resend and set MAIL_FROM to an address on it to email other students.")
+    elif "not verified" in low or "domain" in low:
+        hint = "The sender domain is not verified in Resend yet. Verify it, then set MAIL_FROM to an address on that domain."
+    elif "api key" in low or "401" in low:
+        hint = "The RESEND_API_KEY is invalid. Create a new key in Resend and paste it again."
+    else:
+        hint = "Check RESEND_API_KEY and MAIL_FROM."
+    return f"The email could not be sent. {hint}" + (f" (Resend said: {m[:180]})" if m else "")
+
 def _send_resend(api_key, to, subject, text, html, images, attachments):
     """Send through Resend's HTTPS API. It works on Render's free plan, which blocks SMTP ports."""
     sender = (os.getenv("MAIL_FROM") or "").strip() or "QlickIn <onboarding@resend.dev>"
@@ -217,10 +233,16 @@ def _send_resend(api_key, to, subject, text, html, images, attachments):
         with urllib.request.urlopen(req, timeout=25) as resp:
             return 200 <= resp.status < 300
     except urllib.error.HTTPError as ex:
-        print("Resend error", ex.code, ex.read().decode("utf-8", "ignore")[:400])
+        body = ex.read().decode("utf-8", "ignore")[:400]
+        print("Resend error", ex.code, body)
+        try:
+            MAIL_ERR["msg"] = f"{ex.code}: " + json.loads(body).get("message", body)
+        except ValueError:
+            MAIL_ERR["msg"] = f"{ex.code}: {body}"
         return False
     except Exception as ex:
         print("Resend error:", ex)
+        MAIL_ERR["msg"] = str(ex)
         return False
 
 def send_mail(to, subject, text, html=None, images=None, attachments=None):
@@ -715,9 +737,12 @@ def t_decide(sid, action):
         tok = secrets.token_urlsafe(24)
         ref.update({"status": "approved", "activation_token": tok})
         sent = send_welcome_email(s, activation_token=tok)
+        if not sent:                                  # no working email: activate now so the student can still log in
+            ref.update({"activated": True, "activation_token": None})
         log("Approved student", full_name(s))
         flash(f"Approved {full_name(s)}. " + ("Email with the portal link was sent."
-              if sent else "The email could not be sent - check your email settings (RESEND_API_KEY and MAIL_FROM)."))
+              if sent else "The email could not be sent, so the account was activated directly - the student can log in now "
+                           "with the email and password they registered. (" + mail_fail_text() + ")"))
     else:
         ref.update({"status": "declined"})
         log("Declined student", full_name(s))
@@ -737,7 +762,7 @@ def t_resend(sid):
         db.collection("students").document(sid).update({"activation_token": tok})
         sent = send_welcome_email(st, activation_token=tok)
     log("Resent email", full_name(st))
-    flash(f"Email resent to {st['email']}." if sent else "The email could not be sent - check your email settings (RESEND_API_KEY and MAIL_FROM).")
+    flash(f"Email resent to {st['email']}." if sent else mail_fail_text())
     return redirect(url_for("t_regs"))
 
 def parse_student_form(f, self_id=None):
